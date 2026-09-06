@@ -47,7 +47,7 @@ verificar_login()
 
 
 # ==========================================
-# CONEXÃO COM O GOOGLE SHEETS
+# CONEXÃO COM O GOOGLE SHEETS E DADOS
 # ==========================================
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -56,6 +56,14 @@ def carregar_lancamentos():
     # Lê a aba "Lancamentos" da sua planilha
     df = conn.read(worksheet="Lancamentos")
     df = df.dropna(how="all") # Remove linhas totalmente vazias
+    
+    # TRAVA DE SEGURANÇA: Cria as colunas caso a planilha esteja 100% vazia ou desconfigurada
+    colunas_obrigatorias = ["Data", "Tipo", "Categoria", "Descricao", "Valor"]
+    
+    # Se faltar qualquer uma das colunas lá no Google Sheets, ele corrige automaticamente
+    if not set(colunas_obrigatorias).issubset(df.columns):
+        return pd.DataFrame(columns=colunas_obrigatorias)
+        
     return df
 
 def salvar_lancamento(tipo, categoria, descricao, valor):
