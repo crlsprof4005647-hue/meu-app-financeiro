@@ -17,83 +17,108 @@ st.set_page_config(
 )
 
 # ==========================================
-# CSS ESTILO "BANCO PREMIUM" (Verde, Amarelo e Preto)
+# CSS ESTILO "BANCO PREMIUM" (Harmonia 60-30-10)
 # ==========================================
 st.markdown(
     r"""
     <style>
-    /* 1. FUNDO DO APLICATIVO */
+    /* 1. FUNDO GERAL (Cinza muito claro para descansar a vista e focar nas cores) */
     .stApp {
-        background-color: #F4F7F4; /* Um tom quase branco com toque de verde para descanso de tela */
+        background-color: #F7F9F7; 
     }
     
-    /* 2. CORREÇÃO DO CELULAR (FORÇA O TEXTO A SER PRETO - 10%) */
-    p, span, label, .stMarkdown, .stText, li, .stRadio label {
-        color: #111111 !important; 
+    /* 2. TEXTOS PADRÃO (Preto 10% para contraste perfeito no fundo claro) */
+    .stApp, p, span, label, div {
+        color: #111111;
     }
     
-    /* 3. TÍTULOS (VERDE BANCO - 60%) */
+    /* 3. TÍTULOS (Verde 60%) */
     h1, h2, h3, h4 {
         color: #0A5C2B !important; 
-        font-family: 'Inter', 'Segoe UI', sans-serif !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 800 !important;
     }
     
-    /* 4. CARTÕES DE SALDO (VERDE COM VALORES AMARELOS) */
+    /* ========================================== */
+    /* 4. CARTÕES DE SALDO (A ÂNCORA VERDE 60%)   */
+    /* ========================================== */
     [data-testid="stMetric"] {
-        background-color: #0A5C2B !important; /* Fundo Verde (60%) */
-        border: 2px solid #111111 !important; /* Borda Preta (10%) */
+        background-color: #0A5C2B !important; 
         border-radius: 12px;
         padding: 20px 24px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        border: none !important;
+        box-shadow: 0 4px 10px rgba(10, 92, 43, 0.2);
     }
-    /* Nome do Saldo (Ex: "Total de Entradas") */
+    /* Letras dentro do cartão Verde -> BRANCO para contraste perfeito */
     [data-testid="stMetricLabel"] p {
-        color: #E8F5E9 !important; /* Verde super clarinho pra ler bem no fundo escuro */
+        color: #FFFFFF !important; 
+        font-size: 1rem !important;
         font-weight: 600;
         text-transform: uppercase;
+        opacity: 0.9;
     }
-    /* Valor do Dinheiro (Amarelo - 30%) */
+    /* Valores em dinheiro dentro do cartão Verde -> AMARELO 30% */
     [data-testid="stMetricValue"] div {
         color: #FFD600 !important; 
         font-size: 2.2rem !important;
         font-weight: 800 !important;
     }
     
-    /* 5. BOTÕES DE AÇÃO (AMARELO COM TEXTO PRETO) */
+    /* ========================================== */
+    /* 5. MENU DE NAVEGAÇÃO                       */
+    /* ========================================== */
+    div[role="radiogroup"] {
+        background-color: #FFFFFF;
+        padding: 6px;
+        border-radius: 12px;
+        border: 2px solid #0A5C2B;
+    }
+    /* Fundo Verde quando selecionado */
+    div[role="radiogroup"] > label[data-checked="true"] {
+        background-color: #0A5C2B !important;
+        border-radius: 8px;
+    }
+    /* Letra Amarela quando selecionado */
+    div[role="radiogroup"] > label[data-checked="true"] p {
+        color: #FFD600 !important; 
+        font-weight: 800;
+    }
+    /* Letra Verde quando NÃO selecionado */
+    div[role="radiogroup"] > label[data-checked="false"] p {
+        color: #0A5C2B !important;
+        font-weight: 600;
+    }
+    
+    /* ========================================== */
+    /* 6. BOTÕES DE AÇÃO (AMARELO 30% + PRETO 10%)*/
+    /* ========================================== */
     .stButton > button {
-        background-color: #FFD600 !important; /* Fundo Amarelo (30%) */
-        color: #111111 !important; /* Texto Preto (10%) */
+        background-color: #FFD600 !important; 
+        color: #111111 !important; 
+        border: 2px solid #111111 !important; 
         border-radius: 8px !important;
-        border: 2px solid #111111 !important; /* Borda preta de destaque */
         padding: 0.6rem 1.2rem !important;
-        font-weight: 700 !important;
-        transition: all 0.2s ease-in-out;
+        font-weight: 800 !important;
+        transition: all 0.2s ease;
     }
     .stButton > button:hover {
         background-color: #E5C100 !important;
         box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15) !important;
     }
+    /* Garante que o texto dentro do botão seja sempre preto */
+    .stButton > button p, .stButton > button span {
+        color: #111111 !important;
+    }
     
-    /* 6. FORMULÁRIOS E CAMPOS DE DIGITAÇÃO */
+    /* 7. FORMULÁRIOS E CAIXAS DE DIGITAÇÃO */
     .stTextInput input,
     .stNumberInput input,
     .stDateInput input,
     .stSelectbox div[data-baseweb="select"] {
-        border-radius: 6px !important;
-        border: 1px solid #0A5C2B !important; /* Borda verde */
         background-color: #FFFFFF !important;
         color: #111111 !important;
-    }
-    
-    /* Menu de Navegação - Botão Selecionado */
-    div[role="radiogroup"] > label[data-checked="true"] {
-        background-color: #0A5C2B !important;
-        border-radius: 8px;
-    }
-    div[role="radiogroup"] > label[data-checked="true"] p {
-        color: #FFD600 !important; /* Texto amarelo quando selecionado */
-        font-weight: bold;
+        border: 1px solid #0A5C2B !important;
+        border-radius: 6px !important;
     }
     </style>
     """,
@@ -293,7 +318,7 @@ def pagina_dashboard():
             names="categoria",
             values="valor",
             hole=0.45,
-            color_discrete_sequence=["#0A5C2B", "#FFD600", "#111111", "#4CAF50", "#FFEB3B"] # Cores personalizadas do gráfico
+            color_discrete_sequence=["#0A5C2B", "#FFD600", "#111111", "#4CAF50", "#FFEB3B"]
         )
         st.plotly_chart(grafico, width="stretch")
     else:
@@ -315,6 +340,7 @@ def pagina_dashboard():
             markers=True,
             text="Gasto Acumulado"
         )
+        # Linha verde com bolinhas amarelas
         fig_linha.update_traces(textposition="top left", texttemplate="R$ %{text:,.2f}", line_color="#0A5C2B", marker_color="#FFD600")
         fig_linha.update_layout(yaxis_title="Acumulado (R$)", xaxis_title="Dias do Mês", xaxis=dict(tickformat="%d/%m/%Y"))
         st.plotly_chart(fig_linha, width="stretch")
@@ -460,7 +486,7 @@ def pagina_relatorios():
             color="tipo",
             markers=True,
             title="Evolução Mensal (Receitas x Despesas)",
-            color_discrete_sequence=["#0A5C2B", "#FFD600"] # Linhas nas cores do app
+            color_discrete_sequence=["#0A5C2B", "#FFD600"]
         )
         st.plotly_chart(grafico, use_container_width=True)
 
@@ -483,7 +509,6 @@ def pagina_relatorios():
 # ==========================================
 st.title("Painel Financeiro")
 
-# Nomes limpos, profissionais e sem emojis
 pagina = st.radio(
     "Navegação",
     ["Visão Geral", "Novo Registro", "Contas a Pagar", "Extrato", "Relatórios"],
@@ -504,7 +529,6 @@ elif pagina == "Extrato":
 elif pagina == "Relatórios":
     pagina_relatorios()
 
-# Botão discreto de Logout na barra lateral
 with st.sidebar:
     st.caption("Configurações do Sistema")
     if st.button("Encerrar Sessão", use_container_width=True):
