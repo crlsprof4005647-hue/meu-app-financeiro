@@ -7,6 +7,38 @@ from datetime import date
 from streamlit_gsheets import GSheetsConnection
 
 # ==========================================
+# SISTEMA DE LOGIN (TELA DE BLOQUEIO)
+# ==========================================
+def verificar_login():
+    if "logado" not in st.session_state:
+        st.session_state["logado"] = False
+
+    if not st.session_state["logado"]:
+        st.title("🔒 Acesso Restrito")
+        st.write("Por favor, faça login com seu e-mail e senha para acessar.")
+        
+        with st.form("form_login"):
+            email = st.text_input("E-mail")
+            senha = st.text_input("Senha", type="password")
+            entrar = st.form_submit_button("Entrar", use_container_width=True)
+            
+            if entrar:
+                if "usuarios" in st.secrets:
+                    if email in st.secrets["usuarios"] and str(st.secrets["usuarios"][email]) == senha:
+                        st.session_state["logado"] = True
+                        st.rerun()
+                    else:
+                        st.error("❌ E-mail ou senha incorretos.")
+                else:
+                    st.error("⚠️ Lista de usuários não configurada nos Secrets.")
+        
+        # O COMANDO ABAIXO É O QUE BLOQUEIA O RESTO DO APLICATIVO
+        st.stop() 
+
+# Aciona a tranca antes de carregar o resto do app
+verificar_login()
+
+# ==========================================
 # CONFIGURAÇÃO DE ACESSO AO GOOGLE SHEETS
 # ==========================================
 # ⚠️ Substitua abaixo pelo link da sua planilha
