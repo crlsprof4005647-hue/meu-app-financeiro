@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit_gsheets import GSheetsConnection
-from datetime import datetime
+from datetime import datetime, timedelta
+import extra_streamlit_components as stx
 
 # ==========================================
 # CONFIGURAÇÃO DA PÁGINA (Sempre o 1º comando)
@@ -10,18 +11,31 @@ from datetime import datetime
 st.set_page_config(page_title="Minhas Finanças", page_icon="💰", layout="wide")
 
 # ==========================================
+# GERENCIADOR DE COOKIES (Lembrar Senha)
+# ==========================================
+@st.cache_resource
+def get_manager():
+    return stx.CookieManager()
+
+cookie_manager = get_manager()
+
+# ==========================================
 # SISTEMA DE LOGIN (TELA DE BLOQUEIO)
 # ==========================================
 def verificar_login():
-    if "logado" not in st.session_state:
+    # 1. Tenta ler o cookie do navegador (o carimbo de 30 dias)
+    cookie_logado = cookie_manager.get(cookie="logado")
+    
+    if cookie_logado == "sim":
+        st.session_state["logado"] = True
+    elif "logado" not in st.session_state:
         st.session_state["logado"] = False
 
     if not st.session_state["logado"]:
-        # Layout centralizado para a tela de login
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.title("🔒 Acesso Restrito")
-            st.write("Por favor, faça login com seu e-mail e senha para acessar o painel financeiro.")
+            st.write("Faça login uma vez. Seu celular vai lembrar da senha por 30 dias.")
             
             with st.form("form_login"):
                 email = st.text_input("E-mail")
@@ -30,19 +44,18 @@ def verificar_login():
                 
                 if entrar:
                     if "usuarios" in st.secrets:
-                        # Verifica se o e-mail existe na lista e se a senha está correta
                         if email in st.secrets["usuarios"] and str(st.secrets["usuarios"][email]) == senha:
                             st.session_state["logado"] = True
+                            # 2. Cria o cookie no navegador valendo por 30 dias!
+                            cookie_manager.set("logado", "sim", expires_at=datetime.now() + timedelta(days=30))
                             st.rerun()
                         else:
                             st.error("❌ E-mail ou senha incorretos.")
                     else:
-                        st.error("⚠️ Lista de usuários não configurada nos Secrets.")
-        
-        # Bloqueia o carregamento do restante da página
+                        st.error("⚠️ Lista de usuários não configurada.")
         st.stop() 
 
-# Aciona a tranca antes de continuar lendo o código
+# Aciona a tranca antes de continuar
 verificar_login()
 
 
@@ -53,14 +66,10 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 
 @st.cache_data(ttl=5) # Atualiza os dados a cada 5 segundos
 def carregar_lancamentos():
-    # Lê a aba "Lancamentos" da sua planilha
     df = conn.read(worksheet="Lancamentos")
-    df = df.dropna(how="all") # Remove linhas totalmente vazias
+    df = df.dropna(how="all")
     
-    # TRAVA DE SEGURANÇA: Cria as colunas caso a planilha esteja 100% vazia ou desconfigurada
     colunas_obrigatorias = ["Data", "Tipo", "Categoria", "Descricao", "Valor"]
-    
-    # Se faltar qualquer uma das colunas lá no Google Sheets, ele corrige automaticamente
     if not set(colunas_obrigatorias).issubset(df.columns):
         return pd.DataFrame(columns=colunas_obrigatorias)
         
@@ -92,15 +101,12 @@ def pagina_dashboard():
         st.info("Você ainda não possui lançamentos. Vá em '➕ Novo Lançamento' na barra lateral para começar!")
         return
     
-    # Garante que a coluna de Valor seja número
     df["Valor"] = pd.to_numeric(df["Valor"], errors="coerce").fillna(0)
     
-    # Cálculos dos totais
     receitas = df[df["Tipo"] == "Receita"]["Valor"].sum()
     despesas = df[df["Tipo"] == "Despesa"]["Valor"].sum()
     saldo = receitas - despesas
     
-    # Mostra os cartões (Métricas)
     col1, col2, col3 = st.columns(3)
     col1.metric("Receitas", f"R$ {receitas:,.2f}")
     col2.metric("Despesas", f"R$ {despesas:,.2f}")
@@ -108,11 +114,9 @@ def pagina_dashboard():
     
     st.divider()
     
-    # Gráficos lado a lado
     col_graf1, col_graf2 = st.columns(2)
     
     with col_graf1:
-        # Gráfico 1: Despesas por Categoria (Pizza)
         df_despesas = df[df["Tipo"] == "Despesa"]
         if not df_despesas.empty:
             gastos_por_categoria = df_despesas.groupby("Categoria")["Valor"].sum().reset_index()
@@ -122,13 +126,10 @@ def pagina_dashboard():
             st.write("Sem despesas para o gráfico de categorias.")
             
     with col_graf2:
-        # Gráfico 2: Despesas Acumuladas Dia a Dia (Linha)
         if not df_despesas.empty:
             df_linha = df_despesas.copy()
-            # Converte a Data ignorando a hora e agrupando por dia
             df_linha["Data_Apenas_Dia"] = pd.to_datetime(df_linha["Data"], dayfirst=True, errors="coerce").dt.date
             
-            # Soma os gastos por dia e calcula o acumulado
             gastos_dia = df_linha.groupby("Data_Apenas_Dia")["Valor"].sum().reset_index()
             gastos_dia = gastos_dia.sort_values("Data_Apenas_Dia")
             gastos_dia["Gasto Acumulado"] = gastos_dia["Valor"].cumsum()
@@ -149,7 +150,6 @@ def pagina_dashboard():
 
     st.divider()
     st.subheader("📋 Últimos Lançamentos")
-    # Mostra a tabela de dados invertida (os mais recentes no topo)
     st.dataframe(df.iloc[::-1], use_container_width=True, hide_index=True)
 
 
@@ -186,8 +186,9 @@ if menu == "🏠 Início":
 elif menu == "➕ Novo Lançamento":
     pagina_novo()
 
-# Botão de Logout no fim do menu lateral
+# Botão de Logout destrói o cookie e a sessão
 st.sidebar.divider()
 if st.sidebar.button("🚪 Sair da Conta", use_container_width=True):
+    cookie_manager.delete("logado") # Apaga o carimbo do navegador
     st.session_state["logado"] = False
     st.rerun()
