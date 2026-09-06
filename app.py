@@ -13,11 +13,8 @@ st.set_page_config(page_title="Minhas Finanças", page_icon="💰", layout="wide
 # ==========================================
 # GERENCIADOR DE COOKIES (Lembrar Senha)
 # ==========================================
-@st.cache_resource
-def get_manager():
-    return stx.CookieManager()
-
-cookie_manager = get_manager()
+# Removido o @st.cache_resource que estava causando o erro
+cookie_manager = stx.CookieManager(key="meu_gerenciador_cookies")
 
 # ==========================================
 # SISTEMA DE LOGIN (TELA DE BLOQUEIO)
