@@ -8,57 +8,87 @@ from streamlit_gsheets import GSheetsConnection
 import extra_streamlit_components as stx
 
 # ==========================================
-# CONFIGURAÇÕES DA PÁGINA E CSS (Sempre o 1º comando)
+# CONFIGURAÇÕES DA PÁGINA (Sem emoji extravagante)
 # ==========================================
 st.set_page_config(
-    page_title="Minhas Finanças",
-    page_icon="💰",
+    page_title="Painel Financeiro",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
+# ==========================================
+# CSS ESTILO "BANCO / FINTECH MODERNA"
+# ==========================================
 st.markdown(
     r"""
     <style>
+    /* Fundo do aplicativo Cinza Claro (Estilo Dashboard) */
+    .stApp {
+        background-color: #F8F9FA;
+    }
+    
+    /* Espaçamento geral */
     .block-container {
-        padding-top: 1.5rem;
+        padding-top: 2rem;
         padding-bottom: 2rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
         max-width: 1200px;
     }
-    h1 { font-size: 2rem !important; font-weight: 700 !important; }
-    h2 { font-size: 1.5rem !important; }
-    h3 { font-size: 1.2rem !important; }
-    .stButton > button {
-        min-height: 45px;
-        border-radius: 10px;
-        font-weight: 600;
+    
+    /* Títulos Corporativos */
+    h1, h2, h3 {
+        color: #1E293B !important; 
+        font-family: 'Inter', 'Segoe UI', sans-serif !important;
+        font-weight: 600 !important;
     }
+    
+    /* Estilo dos Cartões de Saldo (Metrics) - Padrão Nubank/Inter Desktop */
+    [data-testid="stMetric"] {
+        background-color: #FFFFFF;
+        border: 1px solid #EAECEF;
+        border-radius: 8px;
+        padding: 20px 24px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.04);
+    }
+    
+    /* Nome do Cartão (Ex: "Saldo Atual") */
+    [data-testid="stMetricLabel"] {
+        font-size: 0.85rem !important;
+        color: #64748B !important;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Valor do Cartão (R$) */
+    [data-testid="stMetricValue"] {
+        font-size: 2.2rem !important;
+        color: #0F172A !important;
+        font-weight: 700;
+    }
+    
+    /* Estilo dos Botões - Escuro/Elegante */
+    .stButton > button {
+        background-color: #0F172A !important;
+        color: #FFFFFF !important;
+        border-radius: 6px !important;
+        border: none !important;
+        padding: 0.6rem 1.2rem !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease-in-out;
+    }
+    .stButton > button:hover {
+        background-color: #334155 !important;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Inputs, Formulários e Tabelas com bordas refinadas */
     .stTextInput input,
     .stNumberInput input,
     .stDateInput input,
-    .stTextArea textarea {
-        border-radius: 8px;
-    }
-    [data-testid="stMetric"] {
-        border: 1px solid rgba(128,128,128,0.25);
-        border-radius: 12px;
-        padding: 15px;
-    }
-    @media (max-width: 768px) {
-        .block-container {
-            padding-left: 0.7rem;
-            padding-right: 0.7rem;
-            padding-top: 1rem;
-        }
-        h1 { font-size: 1.6rem !important; }
-        h2 { font-size: 1.3rem !important; }
-        h3 { font-size: 1.1rem !important; }
-        [data-testid="stMetric"] { padding: 10px; }
-        [data-testid="stMetricValue"] {
-            font-size: 1.25rem !important;
-        }
+    .stSelectbox div[data-baseweb="select"] {
+        border-radius: 6px !important;
+        border: 1px solid #CBD5E1 !important;
+        background-color: #FFFFFF !important;
     }
     </style>
     """,
@@ -81,13 +111,13 @@ def verificar_login():
     if not st.session_state["logado"]:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.title("🔒 Acesso Restrito")
-            st.write("Faça login. Seu celular lembrará do acesso por 30 dias.")
+            st.title("Acesso Restrito")
+            st.write("Insira suas credenciais corporativas.")
             
             with st.form("form_login"):
-                email = st.text_input("E-mail")
-                senha = st.text_input("Senha", type="password")
-                entrar = st.form_submit_button("Entrar", use_container_width=True)
+                email = st.text_input("E-mail corporativo")
+                senha = st.text_input("Senha de acesso", type="password")
+                entrar = st.form_submit_button("Autenticar", use_container_width=True)
                 
                 if entrar:
                     if "usuarios" in st.secrets:
@@ -96,20 +126,18 @@ def verificar_login():
                             cookie_manager.set("logado", "sim", expires_at=datetime.now() + timedelta(days=30))
                             st.rerun()
                         else:
-                            st.error("❌ E-mail ou senha incorretos.")
+                            st.error("Credenciais inválidas.")
                     else:
-                        st.error("⚠️ Lista de usuários não configurada nos Secrets.")
+                        st.error("Configuração de sistema ausente.")
         st.stop() 
 
-# Aciona a tranca de segurança antes de carregar o app
 verificar_login()
 
 # ==========================================
-# CONFIGURAÇÃO DE ACESSO AO GOOGLE SHEETS
+# CONEXÃO COM O GOOGLE SHEETS
 # ==========================================
 URL_PLANILHA = "https://docs.google.com/spreadsheets/d/148fsQSkFCtMiMcZVz-KxSuwBdMkpRH8ds1HQuBfiW-s/edit?usp=sharing"
 
-# Mágica do credenciais JSON para rodar localmente (no Streamlit Cloud ele usa os Secrets)
 if os.path.exists("credenciais.json"):
     os.makedirs(".streamlit", exist_ok=True)
     with open("credenciais.json", "r", encoding="utf-8") as f:
@@ -132,9 +160,6 @@ client_x509_cert_url = "{c['client_x509_cert_url']}"
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# ==========================================
-# FUNÇÕES DE BANCO DE DADOS
-# ==========================================
 def carregar_lancamentos():
     df = conn.read(spreadsheet=URL_PLANILHA, worksheet="Lancamentos", ttl=0)
     df = df.dropna(how="all")
@@ -206,16 +231,16 @@ def moeda(valor):
 
 
 # ==========================================
-# PÁGINAS DO APLICATIVO
+# PÁGINAS DO APLICATIVO (Textos Sóbrios)
 # ==========================================
 def pagina_dashboard():
-    st.title("🏠 Dashboard")
-    st.write("Visão geral das suas finanças.")
+    st.title("Visão Geral")
+    st.write("Acompanhamento e performance financeira.")
 
     df = carregar_lancamentos()
 
     if df.empty:
-        st.info("Você ainda não possui lançamentos.")
+        st.info("Nenhuma movimentação registrada.")
         return
 
     df["data_dt"] = pd.to_datetime(df["data"], errors="coerce")
@@ -225,7 +250,7 @@ def pagina_dashboard():
     if not meses:
         return
 
-    mes_selecionado = st.selectbox("📅 Selecione o mês", meses)
+    mes_selecionado = st.selectbox("Selecione o período", meses)
     dados_mes = df[df["mes"] == mes_selecionado].copy()
 
     entradas = dados_mes.loc[dados_mes["tipo"] == "Entrada", "valor"].sum()
@@ -234,31 +259,22 @@ def pagina_dashboard():
     pendentes = dados_mes.loc[(dados_mes["tipo"] == "Despesa") & (dados_mes["status"] == "Pendente"), "valor"].sum()
     saldo = entradas - despesas
 
-    st.subheader("💰 Resumo financeiro")
+    st.subheader("Resumo do Período")
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("💰 Saldo do mês", moeda(saldo))
+        st.metric("Saldo do Mês", moeda(saldo))
     with col2:
-        st.metric("📥 Entradas", moeda(entradas))
+        st.metric("Total de Entradas", moeda(entradas))
 
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("📤 Despesas", moeda(despesas))
+        st.metric("Total de Despesas", moeda(despesas))
     with col2:
-        st.metric("⏳ Pendentes", moeda(pendentes))
+        st.metric("Contas a Pagar (Pendentes)", moeda(pendentes))
 
     st.divider()
 
-    st.subheader("💳 Situação dos pagamentos")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("✅ Pagas", moeda(pagas))
-    with col2:
-        st.metric("⏳ A pagar", moeda(pendentes))
-
-    st.divider()
-
-    st.subheader("📊 Gastos por categoria")
+    st.subheader("Análise de Gastos por Categoria")
     gastos = dados_mes[dados_mes["tipo"] == "Despesa"]
 
     if not gastos.empty:
@@ -272,21 +288,16 @@ def pagina_dashboard():
             names="categoria",
             values="valor",
             hole=0.45,
-            title="Distribuição dos gastos",
         )
         st.plotly_chart(grafico, width="stretch")
     else:
-        st.info("Não existem despesas neste mês.")
+        st.info("Sem registro de despesas para o período.")
 
-    # GRÁFICO DE LINHA CORRIGIDO (Acumulado dia a dia do mês)
-    st.subheader("📈 Crescimento das Despesas (Acumulado no Mês)")
+    st.subheader("Crescimento de Despesas (Acumulado)")
     
     if not gastos.empty:
         df_linha = gastos.copy()
-        # Garante que horas sejam ignoradas e pega só o dia
         df_linha["data_limpa"] = pd.to_datetime(df_linha["data"], errors="coerce").dt.date
-        
-        # Agrupa os gastos pelo dia exato e faz o cumulativo
         gastos_dia = df_linha.groupby("data_limpa")["valor"].sum().reset_index()
         gastos_dia = gastos_dia.sort_values("data_limpa")
         gastos_dia["Gasto Acumulado"] = gastos_dia["valor"].cumsum()
@@ -295,93 +306,92 @@ def pagina_dashboard():
             gastos_dia, 
             x="data_limpa", 
             y="Gasto Acumulado", 
-            title="Soma de gastos dia a dia",
             markers=True,
             text="Gasto Acumulado"
         )
-        fig_linha.update_traces(textposition="top left", texttemplate="R$ %{text:,.2f}")
+        fig_linha.update_traces(textposition="top left", texttemplate="R$ %{text:,.2f}", line_color="#0F172A")
         fig_linha.update_layout(yaxis_title="Acumulado (R$)", xaxis_title="Dias do Mês", xaxis=dict(tickformat="%d/%m/%Y"))
         st.plotly_chart(fig_linha, width="stretch")
-    else:
-        st.info("Nenhuma despesa para exibir no gráfico.")
 
 
 def pagina_novo_lancamento():
-    st.title("➕ Novo lançamento")
-    st.write("Cadastre uma entrada ou uma despesa.")
+    st.title("Novo Registro")
 
     with st.form("form_lancamento"):
-        data_lancamento = st.date_input("📅 Data", value=date.today())
+        data_lancamento = st.date_input("Data da Transação", value=date.today())
         tipo = st.selectbox("Tipo", ["Despesa", "Entrada"])
-        descricao = st.text_input("📝 Descrição", placeholder="Ex.: Mercado, salário, aluguel...")
+        descricao = st.text_input("Descrição", placeholder="Ex.: Mensalidade, Fornecedor...")
         categoria = st.selectbox(
-            "📂 Categoria",
+            "Categoria",
             ["Salário", "Moradia", "Alimentação", "Transporte", "Contas", "Lazer", "Saúde", "Educação", "Cartão", "Investimentos", "Outros"]
         )
-        conta = st.selectbox("🏦 Conta", ["Conta corrente", "Poupança", "Dinheiro", "Cartão"])
-        valor = st.number_input("💵 Valor", min_value=0.01, value=0.01, step=10.00, format="%.2f")
+        conta = st.selectbox("Conta", ["Conta corrente", "Poupança", "Dinheiro", "Cartão"])
+        valor = st.number_input("Valor (R$)", min_value=0.01, value=0.01, step=10.00, format="%.2f")
 
         if tipo == "Despesa":
-            vencimento = st.date_input("📅 Vencimento", value=date.today())
+            vencimento = st.date_input("Data de Vencimento", value=date.today())
         else:
             vencimento = None
 
-        observacao = st.text_area("🗒️ Observação")
-        salvar = st.form_submit_button("💾 SALVAR LANÇAMENTO", use_container_width=True)
+        observacao = st.text_area("Observações Adicionais")
+        salvar = st.form_submit_button("Registrar Movimentação", use_container_width=True)
 
     if salvar:
         if not descricao.strip():
-            st.error("❌ Informe uma descrição.")
+            st.error("Informe a descrição da transação.")
         elif valor <= 0:
-            st.error("❌ Informe um valor maior que zero.")
+            st.error("O valor deve ser superior a zero.")
         else:
             adicionar_lancamento(data_lancamento, tipo, descricao.strip(), categoria, conta, valor, vencimento, observacao)
-            st.success("✅ Lançamento salvo com sucesso!")
+            st.success("Transação registrada com sucesso.")
 
 
 def pagina_pagamentos():
-    st.title("⏳ Pagamentos")
-    st.write("Despesas que ainda precisam ser pagas.")
+    st.title("Contas a Pagar")
+    st.write("Gerenciamento de obrigações pendentes.")
 
     df = carregar_lancamentos()
     if df.empty:
-        st.success("🎉 Não existem pagamentos pendentes!")
+        st.success("Nenhuma obrigação pendente no momento.")
         return
 
     pendentes = df[(df["tipo"] == "Despesa") & (df["status"] == "Pendente")].copy()
 
     if pendentes.empty:
-        st.success("🎉 Não existem pagamentos pendentes!")
+        st.success("Nenhuma obrigação pendente no momento.")
         return
 
-    st.write(f"Você possui **{len(pendentes)} pagamento(s)** pendente(s).")
+    st.write(f"**{len(pendentes)}** registro(s) aguardando liquidação.")
 
     for _, linha in pendentes.iterrows():
         with st.container(border=True):
             st.write(f"### {linha['descricao']}")
-            st.caption(f"📂 {linha['categoria']}")
-            st.write(f"📅 Vencimento: **{linha['vencimento'] if pd.notna(linha['vencimento']) and str(linha['vencimento']).strip() != '' else '-'}**")
-            st.write(f"💰 Valor: **{moeda(linha['valor'])}**")
+            st.caption(f"{linha['categoria']} | Vencimento: {linha['vencimento'] if pd.notna(linha['vencimento']) and str(linha['vencimento']).strip() != '' else 'Não informado'}")
+            st.write(f"Valor: **{moeda(linha['valor'])}**")
 
-            if st.button("✅ MARCAR COMO PAGA", key=f"pagar_{linha['id']}", use_container_width=True):
+            if st.button("Liquidar (Marcar como Pago)", key=f"pagar_{linha['id']}", use_container_width=True):
                 marcar_como_paga(int(linha["id"]))
                 st.rerun()
 
 
 def pagina_lancamentos():
-    st.title("📋 Lançamentos")
+    st.title("Extrato Geral")
+    st.write("Histórico completo de transações.")
 
     df = carregar_lancamentos()
 
     if df.empty:
-        st.info("Nenhum lançamento cadastrado.")
+        st.info("Nenhuma transação localizada.")
         return
 
-    st.subheader("🔎 Filtros")
-    filtro_tipo = st.selectbox("Tipo", ["Todos", "Entrada", "Despesa"])
-    filtro_status = st.selectbox("Status", ["Todos", "Pago", "Pendente", "Recebido"])
-    categorias = ["Todas"] + sorted(df["categoria"].dropna().unique().tolist())
-    filtro_categoria = st.selectbox("Categoria", categorias)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        filtro_tipo = st.selectbox("Tipo", ["Todos", "Entrada", "Despesa"])
+    with col2:
+        filtro_status = st.selectbox("Status", ["Todos", "Pago", "Pendente", "Recebido"])
+    with col3:
+        categorias = ["Todas"] + sorted(df["categoria"].dropna().unique().tolist())
+        filtro_categoria = st.selectbox("Categoria", categorias)
 
     dados = df.copy()
 
@@ -396,64 +406,45 @@ def pagina_lancamentos():
 
     st.divider()
 
-    st.subheader("✏️ Alterar lançamento")
-    id_alterar = st.number_input("ID do lançamento", min_value=1, step=1)
+    st.subheader("Gerenciar Transação Específica")
+    id_alterar = st.number_input("Informe o ID da transação", min_value=1, step=1)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✅ Marcar como pago", use_container_width=True):
+        if st.button("Definir como Liquidado", use_container_width=True):
             if int(id_alterar) in df["id"].values:
                 marcar_como_paga(int(id_alterar))
                 st.rerun()
             else:
-                st.error("ID não encontrado.")
+                st.error("ID não localizado.")
     with col2:
-        if st.button("⏳ Marcar pendente", use_container_width=True):
+        if st.button("Retornar para Pendente", use_container_width=True):
             if int(id_alterar) in df["id"].values:
                 marcar_como_pendente(int(id_alterar))
                 st.rerun()
             else:
-                st.error("ID não encontrado.")
+                st.error("ID não localizado.")
 
-    confirmar = st.checkbox("Confirmar exclusão")
-    if st.button("🗑️ EXCLUIR", disabled=not confirmar, use_container_width=True):
+    confirmar = st.checkbox("Estou ciente que a exclusão é irreversível")
+    if st.button("Excluir Registro", disabled=not confirmar, use_container_width=True):
         if int(id_alterar) in df["id"].values:
             excluir_lancamento(int(id_alterar))
             st.rerun()
         else:
-            st.error("ID não encontrado.")
+            st.error("ID não localizado.")
 
 
 def pagina_relatorios():
-    st.title("📊 Relatórios")
+    st.title("Relatórios Consolidados")
 
     df = carregar_lancamentos()
     if df.empty:
-        st.info("Não existem dados para gerar relatórios.")
+        st.info("Dados insuficientes para geração de relatórios.")
         return
 
     df["data_dt"] = pd.to_datetime(df["data"], errors="coerce")
     df["mes"] = df["data_dt"].dt.to_period("M").astype(str)
-
-    st.subheader("💸 Gastos por categoria")
-    gastos = df[df["tipo"] == "Despesa"]
-
-    if not gastos.empty:
-        categoria = (
-            gastos.groupby("categoria", as_index=False)["valor"]
-            .sum()
-            .sort_values("valor", ascending=False)
-        )
-        grafico = px.bar(
-            categoria,
-            x="categoria",
-            y="valor",
-            text_auto=".2f",
-            title="Total gasto por categoria",
-        )
-        st.plotly_chart(grafico, use_container_width=True)
-
-    st.subheader("📈 Evolução mensal")
+    
     evolucao = df.groupby(["mes", "tipo"], as_index=False)["valor"].sum()
     if not evolucao.empty:
         grafico = px.line(
@@ -462,11 +453,11 @@ def pagina_relatorios():
             y="valor",
             color="tipo",
             markers=True,
-            title="Evolução mensal",
+            title="Evolução Mensal (Receitas x Despesas)",
         )
         st.plotly_chart(grafico, use_container_width=True)
 
-    st.subheader("📅 Resumo mensal")
+    st.subheader("Fechamento Mensal")
     resumo = df.pivot_table(
         index="mes", columns="tipo", values="valor", aggfunc="sum", fill_value=0
     ).reset_index()
@@ -476,41 +467,40 @@ def pagina_relatorios():
     if "Despesa" not in resumo.columns:
         resumo["Despesa"] = 0
 
-    resumo["Saldo"] = resumo["Entrada"] - resumo["Despesa"]
+    resumo["Saldo Final"] = resumo["Entrada"] - resumo["Despesa"]
     st.dataframe(resumo, use_container_width=True, hide_index=True)
 
 
 # ==========================================
 # MENUS E ROTAS (PÁGINA PRINCIPAL)
 # ==========================================
-st.title("💰 Minhas Finanças")
-st.caption("Seu controle financeiro pessoal")
+st.title("Painel Financeiro")
 
-# Menu de navegação original
+# Nomes limpos, profissionais e sem emojis
 pagina = st.radio(
     "Navegação",
-    ["🏠 Início", "➕ Novo", "⏳ Pagamentos", "📋 Lançamentos", "📊 Relatórios"],
+    ["Visão Geral", "Novo Registro", "Contas a Pagar", "Extrato", "Relatórios"],
     horizontal=True,
     label_visibility="collapsed",
 )
 
 st.divider()
 
-if pagina == "🏠 Início":
+if pagina == "Visão Geral":
     pagina_dashboard()
-elif pagina == "➕ Novo":
+elif pagina == "Novo Registro":
     pagina_novo_lancamento()
-elif pagina == "⏳ Pagamentos":
+elif pagina == "Contas a Pagar":
     pagina_pagamentos()
-elif pagina == "📋 Lançamentos":
+elif pagina == "Extrato":
     pagina_lancamentos()
-elif pagina == "📊 Relatórios":
+elif pagina == "Relatórios":
     pagina_relatorios()
 
-# Botão discreto de Logout no final da página (Sidebar)
+# Botão discreto de Logout na barra lateral
 with st.sidebar:
-    st.title("Configurações")
-    if st.button("🚪 Sair da Conta", use_container_width=True):
+    st.caption("Configurações do Sistema")
+    if st.button("Encerrar Sessão", use_container_width=True):
         cookie_manager.delete("logado")
         st.session_state["logado"] = False
         st.rerun()
