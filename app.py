@@ -12,7 +12,7 @@ import extra_streamlit_components as stx
 # ==========================================
 st.set_page_config(
     page_title="Minhas Finanças",
-    page_icon="💰",
+    page_icon="◈",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -20,45 +20,107 @@ st.set_page_config(
 st.markdown(
     r"""
     <style>
-    .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        max-width: 1200px;
+    /* 1. FUNDO GERAL CLARO (Bloqueia preenchimentos pretos do Dark Mode) */
+    .stApp, .main, [data-testid="stHeader"] {
+        background-color: #F8F9FA !important; 
     }
-    h1 { font-size: 2rem !important; font-weight: 700 !important; }
-    h2 { font-size: 1.5rem !important; }
-    h3 { font-size: 1.2rem !important; }
-    .stButton > button {
-        min-height: 45px;
+    
+    /* 2. TEXTOS DE LEITURA (PRETO) E CONTORNOS */
+    .stApp p, .stApp span, .stApp label, .stApp div, .stApp li {
+        color: #111111;
+    }
+    
+    /* 3. TÍTULOS (VERDE) */
+    h1, h2, h3, h4 {
+        color: #0A5C2B !important; 
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 800 !important;
+    }
+    
+    /* ========================================== */
+    /* 4. CARTÕES DE SALDO (FUNDO VERDE -> LETRA BRANCA) */
+    /* ========================================== */
+    [data-testid="stMetric"] {
+        background-color: #0A5C2B !important; 
         border-radius: 10px;
+        padding: 20px;
+        border: none !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    /* Letras dentro do fundo verde OBRIGATORIAMENTE brancas */
+    [data-testid="stMetricLabel"] p, [data-testid="stMetricLabel"] div, [data-testid="stMetricLabel"] span,
+    [data-testid="stMetricValue"] p, [data-testid="stMetricValue"] div, [data-testid="stMetricValue"] span {
+        color: #FFFFFF !important; 
+    }
+    [data-testid="stMetricLabel"] p {
+        font-size: 0.9rem !important;
+        font-weight: 600;
+        text-transform: uppercase;
+        opacity: 0.95;
+    }
+    [data-testid="stMetricValue"] div {
+        font-size: 2.2rem !important;
+        font-weight: 800 !important;
+    }
+    
+    /* ========================================== */
+    /* 5. MENU DE NAVEGAÇÃO                       */
+    /* ========================================== */
+    div[role="radiogroup"] {
+        background-color: #FFFFFF !important;
+        padding: 5px;
+        border-radius: 10px;
+        border: 1px solid #0A5C2B !important;
+    }
+    /* Aba NÃO selecionada (Fundo Branco -> Letra Verde) */
+    div[role="radiogroup"] > label[data-checked="false"] p {
+        color: #0A5C2B !important;
         font-weight: 600;
     }
+    /* Aba SELECIONADA (Fundo Verde -> Letra Branca) */
+    div[role="radiogroup"] > label[data-checked="true"] {
+        background-color: #0A5C2B !important;
+        border-radius: 6px;
+    }
+    div[role="radiogroup"] > label[data-checked="true"] p {
+        color: #FFFFFF !important; 
+        font-weight: 700;
+    }
+    
+    /* ========================================== */
+    /* 6. BOTÕES DE AÇÃO E FORMULÁRIOS            */
+    /* ========================================== */
+    /* Botões: Amarelo com texto e borda Preto */
+    .stButton > button {
+        background-color: #FFD600 !important; 
+        border: 1px solid #111111 !important; 
+        border-radius: 8px !important;
+        padding: 0.6rem 1.2rem !important;
+        font-weight: 800 !important;
+    }
+    .stButton > button:hover {
+        background-color: #E5C100 !important;
+    }
+    .stButton > button p, .stButton > button span {
+        color: #111111 !important; 
+    }
+    
+    /* Campos de digitação e caixas (Fundo Branco, borda Verde, texto Preto) */
     .stTextInput input,
     .stNumberInput input,
     .stDateInput input,
-    .stTextArea textarea {
-        border-radius: 8px;
+    .stTextArea textarea,
+    .stSelectbox div[data-baseweb="select"],
+    [data-testid="stForm"] {
+        background-color: #FFFFFF !important;
+        color: #111111 !important;
+        border: 1px solid #0A5C2B !important;
+        border-radius: 6px !important;
     }
-    [data-testid="stMetric"] {
-        border: 1px solid rgba(128,128,128,0.25);
-        border-radius: 12px;
-        padding: 15px;
-    }
-    @media (max-width: 768px) {
-        .block-container {
-            padding-left: 0.7rem;
-            padding-right: 0.7rem;
-            padding-top: 1rem;
-        }
-        h1 { font-size: 1.6rem !important; }
-        h2 { font-size: 1.3rem !important; }
-        h3 { font-size: 1.1rem !important; }
-        [data-testid="stMetric"] { padding: 10px; }
-        [data-testid="stMetricValue"] {
-            font-size: 1.25rem !important;
-        }
+    
+    /* Força Tabelas a terem fundo claro */
+    [data-testid="stDataFrame"] {
+        background-color: #FFFFFF !important;
     }
     </style>
     """,
@@ -81,13 +143,13 @@ def verificar_login():
     if not st.session_state["logado"]:
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.title("🔒 Acesso Restrito")
-            st.write("Faça login. Seu celular lembrará do acesso por 30 dias.")
+            st.title("⚿ Acesso Restrito")
+            st.write("Insira suas credenciais. O sistema manterá a sessão por 30 dias.")
             
             with st.form("form_login"):
-                email = st.text_input("E-mail")
-                senha = st.text_input("Senha", type="password")
-                entrar = st.form_submit_button("Entrar", use_container_width=True)
+                email = st.text_input("E-mail corporativo")
+                senha = st.text_input("Senha de acesso", type="password")
+                entrar = st.form_submit_button("Autenticar", use_container_width=True)
                 
                 if entrar:
                     if "usuarios" in st.secrets:
@@ -96,12 +158,11 @@ def verificar_login():
                             cookie_manager.set("logado", "sim", expires_at=datetime.now() + timedelta(days=30))
                             st.rerun()
                         else:
-                            st.error("❌ E-mail ou senha incorretos.")
+                            st.error("✕ E-mail ou senha incorretos.")
                     else:
-                        st.error("⚠️ Lista de usuários não configurada nos Secrets.")
+                        st.error("⚠ Lista de usuários não configurada nos Secrets.")
         st.stop() 
 
-# Aciona a tranca de segurança antes de carregar o app
 verificar_login()
 
 # ==========================================
@@ -109,7 +170,6 @@ verificar_login()
 # ==========================================
 URL_PLANILHA = "https://docs.google.com/spreadsheets/d/148fsQSkFCtMiMcZVz-KxSuwBdMkpRH8ds1HQuBfiW-s/edit?usp=sharing"
 
-# Mágica do credenciais JSON para rodar localmente (no Streamlit Cloud ele usa os Secrets)
 if os.path.exists("credenciais.json"):
     os.makedirs(".streamlit", exist_ok=True)
     with open("credenciais.json", "r", encoding="utf-8") as f:
@@ -132,9 +192,6 @@ client_x509_cert_url = "{c['client_x509_cert_url']}"
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# ==========================================
-# FUNÇÕES DE BANCO DE DADOS
-# ==========================================
 def carregar_lancamentos():
     df = conn.read(spreadsheet=URL_PLANILHA, worksheet="Lancamentos", ttl=0)
     df = df.dropna(how="all")
@@ -209,13 +266,13 @@ def moeda(valor):
 # PÁGINAS DO APLICATIVO
 # ==========================================
 def pagina_dashboard():
-    st.title("🏠 Dashboard")
-    st.write("Visão geral das suas finanças.")
+    st.title("⌂ Visão Geral")
+    st.write("Acompanhamento das suas finanças.")
 
     df = carregar_lancamentos()
 
     if df.empty:
-        st.info("Você ainda não possui lançamentos.")
+        st.info("Nenhum registro localizado.")
         return
 
     df["data_dt"] = pd.to_datetime(df["data"], errors="coerce")
@@ -225,7 +282,7 @@ def pagina_dashboard():
     if not meses:
         return
 
-    mes_selecionado = st.selectbox("📅 Selecione o mês", meses)
+    mes_selecionado = st.selectbox("◫ Selecione o mês", meses)
     dados_mes = df[df["mes"] == mes_selecionado].copy()
 
     entradas = dados_mes.loc[dados_mes["tipo"] == "Entrada", "valor"].sum()
@@ -234,31 +291,31 @@ def pagina_dashboard():
     pendentes = dados_mes.loc[(dados_mes["tipo"] == "Despesa") & (dados_mes["status"] == "Pendente"), "valor"].sum()
     saldo = entradas - despesas
 
-    st.subheader("💰 Resumo financeiro")
+    st.subheader("＄ Resumo Financeiro")
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("💰 Saldo do mês", moeda(saldo))
+        st.metric("Saldo do Mês", moeda(saldo))
     with col2:
-        st.metric("📥 Entradas", moeda(entradas))
+        st.metric("Entradas", moeda(entradas))
 
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("📤 Despesas", moeda(despesas))
+        st.metric("Despesas", moeda(despesas))
     with col2:
-        st.metric("⏳ Pendentes", moeda(pendentes))
+        st.metric("Pendentes", moeda(pendentes))
 
     st.divider()
 
-    st.subheader("💳 Situação dos pagamentos")
+    st.subheader("◷ Situação dos Pagamentos")
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("✅ Pagas", moeda(pagas))
+        st.metric("Pagas", moeda(pagas))
     with col2:
-        st.metric("⏳ A pagar", moeda(pendentes))
+        st.metric("A Pagar", moeda(pendentes))
 
     st.divider()
 
-    st.subheader("📊 Gastos por categoria")
+    st.subheader("◱ Gastos por Categoria")
     gastos = dados_mes[dados_mes["tipo"] == "Despesa"]
 
     if not gastos.empty:
@@ -272,21 +329,19 @@ def pagina_dashboard():
             names="categoria",
             values="valor",
             hole=0.45,
-            title="Distribuição dos gastos",
+            color_discrete_sequence=["#0A5C2B", "#FFD600", "#111111", "#4CAF50", "#FFEB3B"]
         )
+        grafico.update_layout(paper_bgcolor="#F8F9FA", plot_bgcolor="#F8F9FA", font_color="#111111")
         st.plotly_chart(grafico, width="stretch")
     else:
         st.info("Não existem despesas neste mês.")
 
-    # GRÁFICO DE LINHA CORRIGIDO (Acumulado dia a dia do mês)
-    st.subheader("📈 Crescimento das Despesas (Acumulado no Mês)")
+    st.subheader("∿ Crescimento das Despesas")
     
     if not gastos.empty:
         df_linha = gastos.copy()
-        # Garante que horas sejam ignoradas e pega só o dia
         df_linha["data_limpa"] = pd.to_datetime(df_linha["data"], errors="coerce").dt.date
         
-        # Agrupa os gastos pelo dia exato e faz o cumulativo
         gastos_dia = df_linha.groupby("data_limpa")["valor"].sum().reset_index()
         gastos_dia = gastos_dia.sort_values("data_limpa")
         gastos_dia["Gasto Acumulado"] = gastos_dia["valor"].cumsum()
@@ -295,93 +350,92 @@ def pagina_dashboard():
             gastos_dia, 
             x="data_limpa", 
             y="Gasto Acumulado", 
-            title="Soma de gastos dia a dia",
             markers=True,
             text="Gasto Acumulado"
         )
-        fig_linha.update_traces(textposition="top left", texttemplate="R$ %{text:,.2f}")
-        fig_linha.update_layout(yaxis_title="Acumulado (R$)", xaxis_title="Dias do Mês", xaxis=dict(tickformat="%d/%m/%Y"))
+        fig_linha.update_traces(textposition="top left", texttemplate="R$ %{text:,.2f}", line_color="#0A5C2B", marker_color="#FFD600")
+        fig_linha.update_layout(paper_bgcolor="#F8F9FA", plot_bgcolor="#F8F9FA", font_color="#111111", yaxis_title="Acumulado (R$)", xaxis_title="Dias do Mês", xaxis=dict(tickformat="%d/%m/%Y"))
         st.plotly_chart(fig_linha, width="stretch")
     else:
         st.info("Nenhuma despesa para exibir no gráfico.")
 
 
 def pagina_novo_lancamento():
-    st.title("➕ Novo lançamento")
-    st.write("Cadastre uma entrada ou uma despesa.")
+    st.title("＋ Novo Lançamento")
 
     with st.form("form_lancamento"):
-        data_lancamento = st.date_input("📅 Data", value=date.today())
+        data_lancamento = st.date_input("◫ Data", value=date.today())
         tipo = st.selectbox("Tipo", ["Despesa", "Entrada"])
-        descricao = st.text_input("📝 Descrição", placeholder="Ex.: Mercado, salário, aluguel...")
+        descricao = st.text_input("✎ Descrição", placeholder="Ex.: Mercado, salário, aluguel...")
         categoria = st.selectbox(
-            "📂 Categoria",
+            "◪ Categoria",
             ["Salário", "Moradia", "Alimentação", "Transporte", "Contas", "Lazer", "Saúde", "Educação", "Cartão", "Investimentos", "Outros"]
         )
-        conta = st.selectbox("🏦 Conta", ["Conta corrente", "Poupança", "Dinheiro", "Cartão"])
-        valor = st.number_input("💵 Valor", min_value=0.01, value=0.01, step=10.00, format="%.2f")
+        conta = st.selectbox("⛀ Conta", ["Conta corrente", "Poupança", "Dinheiro", "Cartão"])
+        valor = st.number_input("＄ Valor", min_value=0.01, value=0.01, step=10.00, format="%.2f")
 
         if tipo == "Despesa":
-            vencimento = st.date_input("📅 Vencimento", value=date.today())
+            vencimento = st.date_input("◷ Vencimento", value=date.today())
         else:
             vencimento = None
 
-        observacao = st.text_area("🗒️ Observação")
-        salvar = st.form_submit_button("💾 SALVAR LANÇAMENTO", use_container_width=True)
+        observacao = st.text_area("📄 Observação")
+        salvar = st.form_submit_button("✓ SALVAR REGISTRO", use_container_width=True)
 
     if salvar:
         if not descricao.strip():
-            st.error("❌ Informe uma descrição.")
+            st.error("✕ Informe uma descrição.")
         elif valor <= 0:
-            st.error("❌ Informe um valor maior que zero.")
+            st.error("✕ Informe um valor maior que zero.")
         else:
             adicionar_lancamento(data_lancamento, tipo, descricao.strip(), categoria, conta, valor, vencimento, observacao)
-            st.success("✅ Lançamento salvo com sucesso!")
+            st.success("✓ Lançamento salvo com sucesso!")
 
 
 def pagina_pagamentos():
-    st.title("⏳ Pagamentos")
-    st.write("Despesas que ainda precisam ser pagas.")
+    st.title("◷ Pagamentos")
 
     df = carregar_lancamentos()
     if df.empty:
-        st.success("🎉 Não existem pagamentos pendentes!")
+        st.success("✓ Não existem pagamentos pendentes.")
         return
 
     pendentes = df[(df["tipo"] == "Despesa") & (df["status"] == "Pendente")].copy()
 
     if pendentes.empty:
-        st.success("🎉 Não existem pagamentos pendentes!")
+        st.success("✓ Não existem pagamentos pendentes.")
         return
 
-    st.write(f"Você possui **{len(pendentes)} pagamento(s)** pendente(s).")
+    st.write(f"**{len(pendentes)}** registro(s) aguardando pagamento.")
 
     for _, linha in pendentes.iterrows():
         with st.container(border=True):
             st.write(f"### {linha['descricao']}")
-            st.caption(f"📂 {linha['categoria']}")
-            st.write(f"📅 Vencimento: **{linha['vencimento'] if pd.notna(linha['vencimento']) and str(linha['vencimento']).strip() != '' else '-'}**")
-            st.write(f"💰 Valor: **{moeda(linha['valor'])}**")
+            st.caption(f"◪ {linha['categoria']} | Vencimento: {linha['vencimento'] if pd.notna(linha['vencimento']) and str(linha['vencimento']).strip() != '' else '-'}")
+            st.write(f"Valor: **{moeda(linha['valor'])}**")
 
-            if st.button("✅ MARCAR COMO PAGA", key=f"pagar_{linha['id']}", use_container_width=True):
+            if st.button("✓ MARCAR COMO PAGO", key=f"pagar_{linha['id']}", use_container_width=True):
                 marcar_como_paga(int(linha["id"]))
                 st.rerun()
 
 
 def pagina_lancamentos():
-    st.title("📋 Lançamentos")
+    st.title("≡ Extrato Geral")
 
     df = carregar_lancamentos()
 
     if df.empty:
-        st.info("Nenhum lançamento cadastrado.")
+        st.info("Nenhum registro localizado.")
         return
 
-    st.subheader("🔎 Filtros")
-    filtro_tipo = st.selectbox("Tipo", ["Todos", "Entrada", "Despesa"])
-    filtro_status = st.selectbox("Status", ["Todos", "Pago", "Pendente", "Recebido"])
-    categorias = ["Todas"] + sorted(df["categoria"].dropna().unique().tolist())
-    filtro_categoria = st.selectbox("Categoria", categorias)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        filtro_tipo = st.selectbox("Tipo", ["Todos", "Entrada", "Despesa"])
+    with col2:
+        filtro_status = st.selectbox("Status", ["Todos", "Pago", "Pendente", "Recebido"])
+    with col3:
+        categorias = ["Todas"] + sorted(df["categoria"].dropna().unique().tolist())
+        filtro_categoria = st.selectbox("Categoria", categorias)
 
     dados = df.copy()
 
@@ -393,67 +447,48 @@ def pagina_lancamentos():
         dados = dados[dados["categoria"] == filtro_categoria]
 
     st.dataframe(dados, use_container_width=True, hide_index=True)
-
     st.divider()
 
-    st.subheader("✏️ Alterar lançamento")
+    st.subheader("✎ Gerenciar Registro")
     id_alterar = st.number_input("ID do lançamento", min_value=1, step=1)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✅ Marcar como pago", use_container_width=True):
+        if st.button("✓ Marcar Liquidado", use_container_width=True):
             if int(id_alterar) in df["id"].values:
                 marcar_como_paga(int(id_alterar))
                 st.rerun()
             else:
-                st.error("ID não encontrado.")
+                st.error("✕ ID não localizado.")
     with col2:
-        if st.button("⏳ Marcar pendente", use_container_width=True):
+        if st.button("◷ Retornar Pendente", use_container_width=True):
             if int(id_alterar) in df["id"].values:
                 marcar_como_pendente(int(id_alterar))
                 st.rerun()
             else:
-                st.error("ID não encontrado.")
+                st.error("✕ ID não localizado.")
 
-    confirmar = st.checkbox("Confirmar exclusão")
-    if st.button("🗑️ EXCLUIR", disabled=not confirmar, use_container_width=True):
+    confirmar = st.checkbox("Confirmar exclusão permanente")
+    if st.button("✕ EXCLUIR REGISTRO", disabled=not confirmar, use_container_width=True):
         if int(id_alterar) in df["id"].values:
             excluir_lancamento(int(id_alterar))
             st.rerun()
         else:
-            st.error("ID não encontrado.")
+            st.error("✕ ID não localizado.")
 
 
 def pagina_relatorios():
-    st.title("📊 Relatórios")
+    st.title("◱ Relatórios")
 
     df = carregar_lancamentos()
     if df.empty:
-        st.info("Não existem dados para gerar relatórios.")
+        st.info("Dados insuficientes para gerar relatórios.")
         return
 
     df["data_dt"] = pd.to_datetime(df["data"], errors="coerce")
     df["mes"] = df["data_dt"].dt.to_period("M").astype(str)
 
-    st.subheader("💸 Gastos por categoria")
-    gastos = df[df["tipo"] == "Despesa"]
-
-    if not gastos.empty:
-        categoria = (
-            gastos.groupby("categoria", as_index=False)["valor"]
-            .sum()
-            .sort_values("valor", ascending=False)
-        )
-        grafico = px.bar(
-            categoria,
-            x="categoria",
-            y="valor",
-            text_auto=".2f",
-            title="Total gasto por categoria",
-        )
-        st.plotly_chart(grafico, use_container_width=True)
-
-    st.subheader("📈 Evolução mensal")
+    st.subheader("∿ Evolução Mensal")
     evolucao = df.groupby(["mes", "tipo"], as_index=False)["valor"].sum()
     if not evolucao.empty:
         grafico = px.line(
@@ -462,11 +497,12 @@ def pagina_relatorios():
             y="valor",
             color="tipo",
             markers=True,
-            title="Evolução mensal",
+            color_discrete_sequence=["#0A5C2B", "#FFD600"]
         )
+        grafico.update_layout(paper_bgcolor="#F8F9FA", plot_bgcolor="#F8F9FA", font_color="#111111")
         st.plotly_chart(grafico, use_container_width=True)
 
-    st.subheader("📅 Resumo mensal")
+    st.subheader("◫ Fechamento Mensal")
     resumo = df.pivot_table(
         index="mes", columns="tipo", values="valor", aggfunc="sum", fill_value=0
     ).reset_index()
@@ -476,41 +512,38 @@ def pagina_relatorios():
     if "Despesa" not in resumo.columns:
         resumo["Despesa"] = 0
 
-    resumo["Saldo"] = resumo["Entrada"] - resumo["Despesa"]
+    resumo["Saldo Final"] = resumo["Entrada"] - resumo["Despesa"]
     st.dataframe(resumo, use_container_width=True, hide_index=True)
 
 
 # ==========================================
 # MENUS E ROTAS (PÁGINA PRINCIPAL)
 # ==========================================
-st.title("💰 Minhas Finanças")
-st.caption("Seu controle financeiro pessoal")
+st.title("◈ Painel Financeiro")
 
-# Menu de navegação original
 pagina = st.radio(
     "Navegação",
-    ["🏠 Início", "➕ Novo", "⏳ Pagamentos", "📋 Lançamentos", "📊 Relatórios"],
+    ["⌂ Início", "＋ Novo", "◷ Pendentes", "≡ Extrato", "◱ Relatórios"],
     horizontal=True,
     label_visibility="collapsed",
 )
 
 st.divider()
 
-if pagina == "🏠 Início":
+if pagina == "⌂ Início":
     pagina_dashboard()
-elif pagina == "➕ Novo":
+elif pagina == "＋ Novo":
     pagina_novo_lancamento()
-elif pagina == "⏳ Pagamentos":
+elif pagina == "◷ Pendentes":
     pagina_pagamentos()
-elif pagina == "📋 Lançamentos":
+elif pagina == "≡ Extrato":
     pagina_lancamentos()
-elif pagina == "📊 Relatórios":
+elif pagina == "◱ Relatórios":
     pagina_relatorios()
 
-# Botão discreto de Logout no final da página (Sidebar)
 with st.sidebar:
-    st.title("Configurações")
-    if st.button("🚪 Sair da Conta", use_container_width=True):
+    st.caption("Sistema")
+    if st.button("⎋ Encerrar Sessão", use_container_width=True):
         cookie_manager.delete("logado")
         st.session_state["logado"] = False
         st.rerun()
