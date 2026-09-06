@@ -8,7 +8,7 @@ from streamlit_gsheets import GSheetsConnection
 import extra_streamlit_components as stx
 
 # ==========================================
-# CONFIGURAÇÕES DA PÁGINA (Sem emoji extravagante)
+# CONFIGURAÇÕES DA PÁGINA
 # ==========================================
 st.set_page_config(
     page_title="Painel Financeiro",
@@ -17,78 +17,83 @@ st.set_page_config(
 )
 
 # ==========================================
-# CSS ESTILO "BANCO / FINTECH MODERNA"
+# CSS ESTILO "BANCO PREMIUM" (Verde, Amarelo e Preto)
 # ==========================================
 st.markdown(
     r"""
     <style>
-    /* Fundo do aplicativo Cinza Claro (Estilo Dashboard) */
+    /* 1. FUNDO DO APLICATIVO */
     .stApp {
-        background-color: #F8F9FA;
+        background-color: #F4F7F4; /* Um tom quase branco com toque de verde para descanso de tela */
     }
     
-    /* Espaçamento geral */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
+    /* 2. CORREÇÃO DO CELULAR (FORÇA O TEXTO A SER PRETO - 10%) */
+    p, span, label, .stMarkdown, .stText, li, .stRadio label {
+        color: #111111 !important; 
     }
     
-    /* Títulos Corporativos */
-    h1, h2, h3 {
-        color: #1E293B !important; 
+    /* 3. TÍTULOS (VERDE BANCO - 60%) */
+    h1, h2, h3, h4 {
+        color: #0A5C2B !important; 
         font-family: 'Inter', 'Segoe UI', sans-serif !important;
-        font-weight: 600 !important;
+        font-weight: 800 !important;
     }
     
-    /* Estilo dos Cartões de Saldo (Metrics) - Padrão Nubank/Inter Desktop */
+    /* 4. CARTÕES DE SALDO (VERDE COM VALORES AMARELOS) */
     [data-testid="stMetric"] {
-        background-color: #FFFFFF;
-        border: 1px solid #EAECEF;
-        border-radius: 8px;
+        background-color: #0A5C2B !important; /* Fundo Verde (60%) */
+        border: 2px solid #111111 !important; /* Borda Preta (10%) */
+        border-radius: 12px;
         padding: 20px 24px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.04);
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     }
-    
-    /* Nome do Cartão (Ex: "Saldo Atual") */
-    [data-testid="stMetricLabel"] {
-        font-size: 0.85rem !important;
-        color: #64748B !important;
+    /* Nome do Saldo (Ex: "Total de Entradas") */
+    [data-testid="stMetricLabel"] p {
+        color: #E8F5E9 !important; /* Verde super clarinho pra ler bem no fundo escuro */
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
-    
-    /* Valor do Cartão (R$) */
-    [data-testid="stMetricValue"] {
+    /* Valor do Dinheiro (Amarelo - 30%) */
+    [data-testid="stMetricValue"] div {
+        color: #FFD600 !important; 
         font-size: 2.2rem !important;
-        color: #0F172A !important;
-        font-weight: 700;
+        font-weight: 800 !important;
     }
     
-    /* Estilo dos Botões - Escuro/Elegante */
+    /* 5. BOTÕES DE AÇÃO (AMARELO COM TEXTO PRETO) */
     .stButton > button {
-        background-color: #0F172A !important;
-        color: #FFFFFF !important;
-        border-radius: 6px !important;
-        border: none !important;
+        background-color: #FFD600 !important; /* Fundo Amarelo (30%) */
+        color: #111111 !important; /* Texto Preto (10%) */
+        border-radius: 8px !important;
+        border: 2px solid #111111 !important; /* Borda preta de destaque */
         padding: 0.6rem 1.2rem !important;
-        font-weight: 500 !important;
+        font-weight: 700 !important;
         transition: all 0.2s ease-in-out;
     }
     .stButton > button:hover {
-        background-color: #334155 !important;
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1) !important;
+        background-color: #E5C100 !important;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15) !important;
     }
     
-    /* Inputs, Formulários e Tabelas com bordas refinadas */
+    /* 6. FORMULÁRIOS E CAMPOS DE DIGITAÇÃO */
     .stTextInput input,
     .stNumberInput input,
     .stDateInput input,
     .stSelectbox div[data-baseweb="select"] {
         border-radius: 6px !important;
-        border: 1px solid #CBD5E1 !important;
+        border: 1px solid #0A5C2B !important; /* Borda verde */
         background-color: #FFFFFF !important;
+        color: #111111 !important;
+    }
+    
+    /* Menu de Navegação - Botão Selecionado */
+    div[role="radiogroup"] > label[data-checked="true"] {
+        background-color: #0A5C2B !important;
+        border-radius: 8px;
+    }
+    div[role="radiogroup"] > label[data-checked="true"] p {
+        color: #FFD600 !important; /* Texto amarelo quando selecionado */
+        font-weight: bold;
     }
     </style>
     """,
@@ -112,7 +117,7 @@ def verificar_login():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.title("Acesso Restrito")
-            st.write("Insira suas credenciais corporativas.")
+            st.write("Insira suas credenciais bancárias.")
             
             with st.form("form_login"):
                 email = st.text_input("E-mail corporativo")
@@ -231,7 +236,7 @@ def moeda(valor):
 
 
 # ==========================================
-# PÁGINAS DO APLICATIVO (Textos Sóbrios)
+# PÁGINAS DO APLICATIVO
 # ==========================================
 def pagina_dashboard():
     st.title("Visão Geral")
@@ -288,6 +293,7 @@ def pagina_dashboard():
             names="categoria",
             values="valor",
             hole=0.45,
+            color_discrete_sequence=["#0A5C2B", "#FFD600", "#111111", "#4CAF50", "#FFEB3B"] # Cores personalizadas do gráfico
         )
         st.plotly_chart(grafico, width="stretch")
     else:
@@ -309,7 +315,7 @@ def pagina_dashboard():
             markers=True,
             text="Gasto Acumulado"
         )
-        fig_linha.update_traces(textposition="top left", texttemplate="R$ %{text:,.2f}", line_color="#0F172A")
+        fig_linha.update_traces(textposition="top left", texttemplate="R$ %{text:,.2f}", line_color="#0A5C2B", marker_color="#FFD600")
         fig_linha.update_layout(yaxis_title="Acumulado (R$)", xaxis_title="Dias do Mês", xaxis=dict(tickformat="%d/%m/%Y"))
         st.plotly_chart(fig_linha, width="stretch")
 
@@ -454,6 +460,7 @@ def pagina_relatorios():
             color="tipo",
             markers=True,
             title="Evolução Mensal (Receitas x Despesas)",
+            color_discrete_sequence=["#0A5C2B", "#FFD600"] # Linhas nas cores do app
         )
         st.plotly_chart(grafico, use_container_width=True)
 
